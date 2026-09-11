@@ -6,6 +6,7 @@ from tensorflow.keras.models import load_model
 import ee
 import os
 import json
+from google.oauth2 import service_account
 
 # Configuración de la página en Streamlit
 st.set_page_config(
@@ -17,15 +18,28 @@ st.set_page_config(
 # Inicializar Google Earth Engine (usando la ruta relativa de credenciales)
 @st.cache_resource
 def init_gee():
-    cred_path = os.path.join("credentials", "gee_key.json")
-    if os.path.exists(cred_path):
-        with open(cred_path) as f:
-            cred_data = json.load(f)
-        credentials = ee.ServiceAccountCredentials(cred_data['client_email'], cred_path)
+    # Lee el secreto configurado en Posit Connect Cloud
+    gee_secret_json = os.environ.get("GEE_CREDENTIALS_JSON")
+    
+    if gee_secret_json:
+        # Carga las credenciales desde el texto JSON de la variable de entorno
+        cred_dict = json.loads(gee_secret_json)
+        credentials = service_account.Credentials.from_service_account_info(
+            cred_dict, 
+            scopes=['https://www.googleapis.com/auth/earthengine']
+        )
         ee.Initialize(credentials)
     else:
-        # Intento por defecto si las credenciales están en variables de entorno o entorno local
-        ee.Initialize()
+        # Intento local por si lo pruebas en tu computadora con archivo físico
+        cred_path = os.path.join("credentials", "gee_key.json")
+        if os.path.exists(cred_path):
+            credentials = service_account.Credentials.from_service_account_file(
+                cred_path, 
+                scopes=['https://www.googleapis.com/auth/earthengine']
+            )
+            ee.Initialize(credentials)
+        else:
+            ee.Initialize()
 
 init_gee()
 
