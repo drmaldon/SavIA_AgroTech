@@ -17,7 +17,7 @@ st.set_page_config(
 # Inicializar Google Earth Engine (usando la ruta relativa de credenciales)
 @st.cache_resource
 def init_gee():
-    cred_path = os.path.join("credenciales", "gee_key.json")
+    cred_path = os.path.join("credentials", "gee_key.json")
     if os.path.exists(cred_path):
         with open(cred_path) as f:
             cred_data = json.load(f)
